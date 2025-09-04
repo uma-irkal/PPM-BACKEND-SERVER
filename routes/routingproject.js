@@ -127,6 +127,7 @@ router.put("/:projectId/tasks/:taskId", async (req, res) => {
 });
 
 // Delete Task
+// Delete Task
 router.delete("/:projectId/tasks/:taskId", async (req, res) => {
   const { projectId, taskId } = req.params;
 
@@ -142,10 +143,11 @@ router.delete("/:projectId/tasks/:taskId", async (req, res) => {
     });
     if (!project) return res.status(404).json({ message: "Project not found" });
 
-    const task = project.tasks.id(taskId);
-    if (!task) return res.status(404).json({ message: "Task not found" });
+    // ✅ safer way: filter out the task instead of task.remove()
+    project.tasks = project.tasks.filter(
+      (t) => t._id.toString() !== taskId.toString()
+    );
 
-    task.remove();
     await project.save();
 
     res.json({ message: "Task deleted", project });
