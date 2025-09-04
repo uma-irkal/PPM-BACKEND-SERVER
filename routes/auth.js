@@ -13,8 +13,11 @@ router.post("/signup", async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: "User exists" });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, email, password: hashedPassword });
+    // const hashedPassword = await bcrypt.hash(password, 10);
+    //const user = new User({ name, email, password: hashedPassword });
+    // No manual hashing needed
+    const user = new User({ name, email, password }); // pre-save hook hashes automatically
+
     await user.save();
 
     const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: "7d" });
@@ -31,7 +34,9 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    //const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await user.matchPassword(password); // uses bcrypt internally
+
     if (!isMatch)
       return res.status(400).json({ message: "Invalid credentials" });
 
