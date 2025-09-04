@@ -1,8 +1,10 @@
+// routes/routingproject.js
 const express = require("express");
-const router = express.Router();
-const Project = require("../models/Project");
 const mongoose = require("mongoose");
+const Project = require("../models/Project");
 const protect = require("../middleware/auth");
+
+const router = express.Router();
 
 // Protect all routes
 router.use(protect);
@@ -22,7 +24,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Get all Projects for logged-in user
+// Get all Projects
 router.get("/", async (req, res) => {
   try {
     const projects = await Project.find({ user: req.user._id });
@@ -39,10 +41,12 @@ router.put("/:projectId", async (req, res) => {
       _id: req.params.projectId,
       user: req.user._id,
     });
+
     if (!project) return res.status(404).json({ message: "Project not found" });
 
     Object.assign(project, req.body);
     await project.save();
+
     res.json(project);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -56,11 +60,10 @@ router.delete("/:projectId", async (req, res) => {
       _id: req.params.projectId,
       user: req.user._id,
     });
+
     if (!project) return res.status(404).json({ message: "Project not found" });
 
-    res
-      .status(200)
-      .json({ message: "Project deleted", id: req.params.projectId });
+    res.json({ message: "Project deleted", id: req.params.projectId });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -78,14 +81,12 @@ router.post("/:projectId/tasks", async (req, res) => {
   if (!mongoose.Types.ObjectId.isValid(projectId))
     return res.status(400).json({ message: "Invalid projectId" });
 
-  if (!title)
-    return res.status(400).json({ message: "Task title is required" });
-
   try {
     const project = await Project.findOne({
       _id: projectId,
       user: req.user._id,
     });
+
     if (!project) return res.status(404).json({ message: "Project not found" });
 
     const task = { title, dueDate, status: status || "Pending" };
@@ -112,6 +113,7 @@ router.put("/:projectId/tasks/:taskId", async (req, res) => {
       _id: projectId,
       user: req.user._id,
     });
+
     if (!project) return res.status(404).json({ message: "Project not found" });
 
     const task = project.tasks.id(taskId);
@@ -127,7 +129,6 @@ router.put("/:projectId/tasks/:taskId", async (req, res) => {
 });
 
 // Delete Task
-// Delete Task
 router.delete("/:projectId/tasks/:taskId", async (req, res) => {
   const { projectId, taskId } = req.params;
 
@@ -141,17 +142,19 @@ router.delete("/:projectId/tasks/:taskId", async (req, res) => {
       _id: projectId,
       user: req.user._id,
     });
+
     if (!project) return res.status(404).json({ message: "Project not found" });
 
-    // ✅ safer way: filter out the task instead of task.remove()
-    project.tasks = project.tasks.filter(
-      (t) => t._id.toString() !== taskId.toString()
-    );
+    const task = project.tasks.id(taskId);
+    if (!task) return res.status(404).json({ message: "Task not found" });
 
+    // Remove task properly
+    task.remove();
     await project.save();
 
-    res.json({ message: "Task deleted", project });
+    res.json({ message: "Task deleted successfully", project });
   } catch (err) {
+    console.error("❌ Delete task error:", err.message);
     res.status(500).json({ message: err.message });
   }
 });
