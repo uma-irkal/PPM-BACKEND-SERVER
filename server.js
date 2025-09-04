@@ -23,7 +23,7 @@ app.get("/", (req, res) => {
 
 // Routes
 app.use("/api/auth", require("./routes/auth")); // Signup/Login
-app.use("/api/projects", require("./routes/projects")); // CRUD Projects (protected)
+app.use("/api/routingproject", require("./routes/routingproject")); // CRUD Projects (protected)
 
 // Start server
 const PORT = process.env.PORT || 5000;
