@@ -88,11 +88,13 @@ router.delete("/:projectId/tasks/:taskId", async (req, res) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    task.remove();
-    await project.save();
+    // ❌ task.remove();  <-- causes crash in Mongoose 6+
+    task.deleteOne(); // ✅ use this instead
 
-    res.json(project); // ✅ return updated project
+    await project.save();
+    res.json(project); // return updated project
   } catch (err) {
+    console.error("Delete task error:", err);
     res.status(500).json({ message: err.message });
   }
 });
