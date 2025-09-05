@@ -76,20 +76,25 @@ router.put("/:projectId/tasks/:taskId", async (req, res) => {
 
 // Delete Task
 // Delete Task
+// Delete Task
 router.delete("/:projectId/tasks/:taskId", async (req, res) => {
   try {
-    const project = await Project.findById(req.params.projectId);
+    const { projectId, taskId } = req.params;
+
+    // find project
+    const project = await Project.findById(projectId);
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    const task = project.tasks.id(req.params.taskId);
+    // find task
+    const task = project.tasks.id(taskId);
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    // ❌ task.remove();  <-- causes crash in Mongoose 6+
-    task.deleteOne(); // ✅ use this instead
+    // remove task from array
+    project.tasks.pull(taskId);
 
     await project.save();
     res.json(project); // return updated project
