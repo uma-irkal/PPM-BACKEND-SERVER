@@ -75,12 +75,23 @@ router.put("/:projectId/tasks/:taskId", async (req, res) => {
 });
 
 // Delete Task
+// Delete Task
 router.delete("/:projectId/tasks/:taskId", async (req, res) => {
   try {
     const project = await Project.findById(req.params.projectId);
-    project.tasks.id(req.params.taskId).remove();
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+
+    const task = project.tasks.id(req.params.taskId);
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    task.remove();
     await project.save();
-    res.json(project);
+
+    res.json(project); // ✅ return updated project
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
